@@ -1,4 +1,5 @@
 import argparse, time, pyautogui
+from getpass import getpass
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -143,12 +144,23 @@ if __name__ == '__main__':
     注意: 雲端硬碟至少要有一個資料夾才能被下載
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--email', type=str, required=True, help='Gsuite account email like jason022085.ie07g@nctu.edu.tw')
-    parser.add_argument('--pwd', type=str, required=True, help='Gsuite account password. Do NOT worry, we will NOT steal your information.')
+    parser.add_argument('--email', type=str, default='', required=False, help='Gsuite account email like jason022085.ie07g@nctu.edu.tw If omitted, the email will be acquired through an input prompt.')
+    parser.add_argument('--pwd', type=str, default='', required=False, help='Gsuite account password. Do NOT worry, we will NOT steal your information. If omitted, the password will be acquired through an input prompt.')
     parser.add_argument('--sdrive', type=int, default=0, required=False, help='How many shared drives do you want to download ? If not, skip this argument.')
     args = parser.parse_args()
+    # 若未使用 --email 跳出輸入列 `Email:` 以取得帳號
+    # 去掉輸入值前後的空白字符以避免可能的錯誤
+    # 若為空字串或空白，則丟出例外
     email = args.email
+    if not email:
+        email = input("Email: ").strip()
+        assert email
+    # 若未使用 --pwd 跳出輸入列 `Password:` 以取得密碼
+    # 若為空字串，則丟出例外
     password = args.pwd
+    if not password:
+        password = getpass()
+        assert password
     num_of_sharedDrive = args.sdrive
     DownloadGdirveFiles(email, password, num_of_sharedDrive).download_all()
 

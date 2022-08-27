@@ -21,6 +21,13 @@
 ```
 python download_gdrive.py --email myaccount@nctu.edu.tw --pwd mypassword --sdrive 0  
 ```
+
+若沒有在指令中指定 Gsuite 帳號或密碼，請在接下來跳出的輸入列輸入: 
+```
+Email:
+Password:
+```
+
 之後，你將看到Chrome被自動打開:
 ![image](https://github.com/jason022085/backup-google-drive/blob/main/demo/demo_1.png)
 
