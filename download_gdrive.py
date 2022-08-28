@@ -13,13 +13,17 @@ DOWNLOAD_ICON_PATH = "./images/download_icon.png"
 # class
 class DownloadGdirveFiles(object):
 
-    def __init__(self, email, password, num_of_sharedDrive = 0) -> None:
+    def __init__(self, email, password,
+                 num_of_sharedDrive = 0,
+                 destination = '',
+                 ) -> None:
         pyautogui.FAILSAFE = False
         self.chrome_options = None
         self.driver = None
         self.email = email
         self.password = password
         self.num_of_sharedDrive = num_of_sharedDrive
+        self.destination = destination
 
     def __set_chrome_option(self, headless = False):
         """
@@ -44,6 +48,8 @@ class DownloadGdirveFiles(object):
                   'profile.default_content_setting_values.automatic_downloads': 1,
                   'profile.password_manager_enabled': False, 
                   'credentials_enable_service': False } 
+        if self.destination != '':
+            prefs['download.default_directory'] = self.destination
         chrome_options.add_experimental_option('prefs',prefs)
         # 設定屬性 chrome_options
         self.chrome_options = chrome_options
@@ -146,10 +152,13 @@ if __name__ == '__main__':
     parser.add_argument('--email', type=str, required=True, help='Gsuite account email like jason022085.ie07g@nctu.edu.tw')
     parser.add_argument('--pwd', type=str, required=True, help='Gsuite account password. Do NOT worry, we will NOT steal your information.')
     parser.add_argument('--sdrive', type=int, default=0, required=False, help='How many shared drives do you want to download ? If not, skip this argument.')
+    parser.add_argument('--destination', type = str, default='', required=False, help='Directory to store the downloaded files.')
     args = parser.parse_args()
     email = args.email
     password = args.pwd
     num_of_sharedDrive = args.sdrive
-    DownloadGdirveFiles(email, password, num_of_sharedDrive).download_all()
+    DownloadGdirveFiles(email, password, num_of_sharedDrive,
+                        destination=args.destination,
+                        ).download_all()
 
 
