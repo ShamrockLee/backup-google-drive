@@ -14,13 +14,19 @@ DOWNLOAD_ICON_PATH = "./images/download_icon.png"
 # class
 class DownloadGdirveFiles(object):
 
-    def __init__(self, email, password, num_of_sharedDrive = 0) -> None:
+    def __init__(self, email, password,
+                 num_of_sharedDrive = 0,
+                 manual_login = False,
+                 default_manual_delay = -1,
+                 ) -> None:
         pyautogui.FAILSAFE = False
         self.chrome_options = None
         self.driver = None
         self.email = email
         self.password = password
         self.num_of_sharedDrive = num_of_sharedDrive
+        self.manual_login = manual_login
+        self.default_manual_delay = default_manual_delay
 
     def __set_chrome_option(self, headless = False):
         """
@@ -57,16 +63,25 @@ class DownloadGdirveFiles(object):
         self.driver = driver
 
     def __login(self):
-        input_email = self.driver.find_element('xpath','/html/body/div[1]/div[1]/div[2]/div/div[2]/div/div/div[2]/div/div[1]/div/form/span/section/div/div/div[1]/div/div[1]/div/div[1]/input')
-        # 輸入Gsuite信箱 (個人Gmail因為低安全性所以不行)
-        input_email.send_keys(self.email)
-        input_email.send_keys('\n')
-        time.sleep(1)
-        # 輸入密碼
-        input_password = self.driver.find_element('xpath', '/html/body/div[1]/div[1]/div[2]/div/div[2]/div/div/div[2]/div/div[1]/div/form/span/section/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/div[1]/input')
-        input_password.send_keys(self.password)
-        input_password.send_keys('\n')
-        time.sleep(5)
+        if (self.manual_login): # 手動登入
+            # 等待使用者手動登入
+            print("Please log in to your Gsuite account manually.")
+            input("Press Enter to continue ...")
+            # 給使用者時間回到 Chrome 視窗
+            manual_delay = self.__get_manual_delay()
+            print("Please go to the Chrome window in {} seconds.".format(manual_delay))
+            time.sleep(manual_delay)
+        else: # 自動登入
+            input_email = self.driver.find_element('xpath','/html/body/div[1]/div[1]/div[2]/div/div[2]/div/div/div[2]/div/div[1]/div/form/span/section/div/div/div[1]/div/div[1]/div/div[1]/input')
+            # 輸入Gsuite信箱 (個人Gmail因為低安全性所以不行)
+            input_email.send_keys(self.email)
+            input_email.send_keys('\n')
+            time.sleep(1)
+            # 輸入密碼
+            input_password = self.driver.find_element('xpath', '/html/body/div[1]/div[1]/div[2]/div/div[2]/div/div/div[2]/div/div[1]/div/form/span/section/div/div/div[1]/div[1]/div/div/div/div/div[1]/div/div[1]/input')
+            input_password.send_keys(self.password)
+            input_password.send_keys('\n')
+            time.sleep(5)
 
     def __de_identify(self):
         self.email = None
@@ -120,6 +135,19 @@ class DownloadGdirveFiles(object):
             pyautogui.hotkey('alt', 'f4')
             print("shared_drive_icon not found") 
 
+    def __get_manual_delay(self) -> int:
+        if self.default_manual_delay >= 0:
+            return self.default_manual_delay
+        else:
+            print("How many times do you need to go to the Chrome window?")
+            answer_raw = input('Delay in seconds (default to 10): ').strip()
+            try:
+                answer = int(answer_raw)
+            except ValueError:
+                answer = 10
+            assert answer >= 0
+            return answer
+
     def download_all(self):
         print("set chrome option...")
         self.__set_chrome_option()
@@ -147,21 +175,28 @@ if __name__ == '__main__':
     parser.add_argument('--email', type=str, default='', required=False, help='Gsuite account email like jason022085.ie07g@nctu.edu.tw If omitted, the email will be acquired through an input prompt.')
     parser.add_argument('--pwd', type=str, default='', required=False, help='Gsuite account password. Do NOT worry, we will NOT steal your information. If omitted, the password will be acquired through an input prompt.')
     parser.add_argument('--sdrive', type=int, default=0, required=False, help='How many shared drives do you want to download ? If not, skip this argument.')
+    parser.add_argument('--manual-login', action='store_true', help='Wait for the user to log in the Gsuite manually. This is useful should login interface got changed. See also --manual-delay')
+    parser.add_argument('--manual-delay', type=int, default=-1, required=False, help='Seconds to wait after the user finishes the manual operations. If omitted, it will be acquired through an input prompt.')
     args = parser.parse_args()
-    # 若未使用 --email 跳出輸入列 `Email:` 以取得帳號
-    # 去掉輸入值前後的空白字符以避免可能的錯誤
-    # 若為空字串或空白，則丟出例外
+    manual_login = args.manual_login
     email = args.email
-    if not email:
-        email = input("Email: ").strip()
-        assert email
-    # 若未使用 --pwd 跳出輸入列 `Password:` 以取得密碼
-    # 若為空字串，則丟出例外
     password = args.pwd
-    if not password:
-        password = getpass()
-        assert password
+    if (not manual_login):
+        # 若未使用 --email 跳出輸入列 `Email:` 以取得帳號
+        # 去掉輸入值前後的空白字符以避免可能的錯誤
+        # 若為空字串或空白，則丟出例外
+        if not email:
+            email = input("Email: ").strip()
+            assert email
+        # 若未使用 --pwd 跳出輸入列 `Password:` 以取得密碼
+        # 若為空字串，則丟出例外
+        if not password:
+            password = getpass()
+            assert password
     num_of_sharedDrive = args.sdrive
-    DownloadGdirveFiles(email, password, num_of_sharedDrive).download_all()
+    DownloadGdirveFiles(email, password, num_of_sharedDrive,
+                        manual_login=manual_login,
+                        default_manual_delay=args.manual_delay,
+                        ).download_all()
 
 
